@@ -38,4 +38,4 @@ class SkinModel:
         self.inspect_link = ""
         self.is_stattrak = False
         self.is_souvenir = False
-        self.stickers = []
+        self.stickers = list()
