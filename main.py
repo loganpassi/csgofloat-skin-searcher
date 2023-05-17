@@ -1,67 +1,106 @@
 from requests.auth import HTTPBasicAuth
 from email.mime.text import MIMEText
+from typing import List
 import requests
 import smtplib
+import json
+import time
 
-from models import SkinModel
+from models import SkinModel, StickerModel
 
 import smtplib
 from email.mime.text import MIMEText
 
 def main():
-    subject = "Email Subject"
-    body = "This is the body of the text message"
-    sender = "sender@gmail.com"
-    recipients = ["recipient1@gmail.com", "recipient2@gmail.com"]
-    password = "password"
+    
+    jsonFile = open('./settings.json')
+    settings = json.load(jsonFile)
+    emailSettings = settings["emailSettings"]
+    searchSettings = settings["searchSettings"]
 
-    send_email(subject, body, sender, recipients, password)
-
-    url = 'https://csgofloat.com/api/v1/listings?limit=30&def_index=5030&paint_index=10018'
+    apiUrl = searchSettings["baseApiUrl"] + searchSettings["queryParams"]
+    searchUrl = searchSettings["baseSearchUrl"] + "min_float=" + str(searchSettings["minFloat"]) + "&max_float=" + str(searchSettings["maxFloat"]) + searchSettings["queryParams"]
     headers = {'Accept': 'application/json'}
 
-    maxFloat = 0.20
+    maxFloat = searchSettings["maxFloat"]
+    minFloat = searchSettings["minFloat"]
+    
+    while(True):
 
-    try:
-        response = requests.get(url, headers=headers)
-    except:
-        print("Get Request Failed")
+        try:
+            response = requests.get(apiUrl, headers=headers)
+        except:
+            print("Get Request Failed")
 
 
-    skins = []
+        skins:List[SkinModel] = list()
 
-    for s in response.json():
-        if float(s["item"]["float_value"]) <= maxFloat:
-            currentSkin = SkinModel()
-            currentSkin.id = s["id"]
-            currentSkin.price = int(s["price"])
-            currentSkin.paint_seed = int(s["item"]["paint_seed"])
-            currentSkin.float_value = float(s["item"]["float_value"])
-            currentSkin.item_name = s["item"]["item_name"]
-            currentSkin.wear_name = s["item"]["wear_name"]
-            currentSkin.description = s["item"]["description"]
-            currentSkin.inspect_link = s["item"]["inspect_link"] if "inspect_link" in s else ""
-            currentSkin.is_stattrak = s["item"]["is_stattrak"]
-            currentSkin.is_souvenir = s["item"]["is_souvenir"]
+        for obj in response.json():
+            skin = obj["item"]
+            if float(skin["float_value"]) <= maxFloat and float(skin["float_value"]) >= minFloat:
+                currentSkin = SkinModel()
+                currentSkin.id = obj["id"]
+                currentSkin.price = float(int(obj["price"])/100)
+                currentSkin.paint_seed = int(skin["paint_seed"])
+                currentSkin.float_value = float(skin["float_value"])
+                currentSkin.item_name = skin["item_name"]
+                currentSkin.wear_name = skin["wear_name"]
+                currentSkin.description = skin["description"]
+                currentSkin.inspect_link = skin["inspect_link"] if "inspect_link" in skin else ""
+                currentSkin.is_stattrak = skin["is_stattrak"]
+                currentSkin.is_souvenir = skin["is_souvenir"]
+                
+                if "stickers" in skin:
+                    for sticker in skin["stickers"]:
+                        currentSticker = StickerModel()
+                        currentSticker.id = sticker["stickerId"]
+                        currentSticker.slot = sticker["slot"]
+                        currentSticker.icon_url = sticker["icon_url"]
+                        currentSticker.name = sticker["name"]
+                        currentSticker.price = float(int(sticker["scm"]["price"])/100)
+                        
+                        currentSkin.stickers.append(currentSticker)
+                    
 
-            skins.append(currentSkin)
+                skins.append(currentSkin)
 
-    print("end")
+        if(len(skins) > 0):
+            print("Skin(s) found, preparing email")
+            
+            links = ""
+            
+            for skin in skins:
+                links += "<div><ul><li>Float: " + str(skin.float_value) + "</li><li>Price: " + str('${:,.2f}'.format(skin.price)) + "</li></ul></div>"
+            
+            subject = "Skin Searcher"
+            body = "<html><body><h1>Search Link: <a href=\"" + searchUrl + "\">" + searchUrl + "</a><br><br>" + links + "</body></html>"
+            sender = emailSettings["sender"]
+            recipients = emailSettings["recipients"]
+            password = emailSettings["password"]
 
-def send_email(subject, body, sender, recipients, password):
-    msg = MIMEText(body)
+            sendEmail(subject, body, sender, recipients, password)
+        else:
+            print("No skins found")
+        
+        #Sleep for 15 min (900 sec)
+        time.sleep(900)
+
+def sendEmail(subject, body, sender, recipients, password):
+    msg = MIMEText(body, "html")
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = ', '.join(recipients)
     smtp_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
     
     try:
+        print("Attempting to send email")
         smtp_server.login(sender, password)
         smtp_server.sendmail(sender, recipients, msg.as_string())
+        print("Email sent")
     except:
         print("Failed to send email")
         
-    smtp_server.quit()
+    smtp_server.quit()        
 
 
 if __name__ == "__main__":
