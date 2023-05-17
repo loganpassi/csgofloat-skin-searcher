@@ -4,7 +4,7 @@ import requests
 import smtplib
 import json
 
-from models import SkinModel
+from models import SkinModel, StickerModel
 
 import smtplib
 from email.mime.text import MIMEText
@@ -16,7 +16,7 @@ def main():
     emailSettings = settings["emailSettings"]
     searchSettings = settings["searchSettings"]
 
-    url = searchSettings["searchUrl"]
+    url = searchSettings["baseUrl"] + searchSettings["queryParams"]
     headers = {'Accept': 'application/json'}
 
     maxFloat = searchSettings["maxFloat"]
@@ -30,36 +30,54 @@ def main():
 
     skins = []
 
-    for s in response.json():
-        if float(s["item"]["float_value"]) <= maxFloat and float(s["item"]["float_value"]) >= minFloat:
+    for obj in response.json():
+        skin = obj["item"]
+        if float(skin["float_value"]) <= maxFloat and float(skin["float_value"]) >= minFloat:
             currentSkin = SkinModel()
-            currentSkin.id = s["id"]
-            currentSkin.price = int(s["price"])
-            currentSkin.paint_seed = int(s["item"]["paint_seed"])
-            currentSkin.float_value = float(s["item"]["float_value"])
-            currentSkin.item_name = s["item"]["item_name"]
-            currentSkin.wear_name = s["item"]["wear_name"]
-            currentSkin.description = s["item"]["description"]
-            currentSkin.inspect_link = s["item"]["inspect_link"] if "inspect_link" in s else ""
-            currentSkin.is_stattrak = s["item"]["is_stattrak"]
-            currentSkin.is_souvenir = s["item"]["is_souvenir"]
+            currentSkin.id = obj["id"]
+            currentSkin.price = float(int(obj["price"])/100)
+            currentSkin.paint_seed = int(skin["paint_seed"])
+            currentSkin.float_value = float(skin["float_value"])
+            currentSkin.item_name = skin["item_name"]
+            currentSkin.wear_name = skin["wear_name"]
+            currentSkin.description = skin["description"]
+            currentSkin.inspect_link = skin["inspect_link"] if "inspect_link" in skin else ""
+            currentSkin.is_stattrak = skin["is_stattrak"]
+            currentSkin.is_souvenir = skin["is_souvenir"]
+            
+            if "stickers" in skin:
+                for sticker in skin["stickers"]:
+                    currentSticker = StickerModel()
+                    currentSticker.id = sticker["stickerId"]
+                    currentSticker.slot = sticker["slot"]
+                    currentSticker.icon_url = sticker["icon_url"]
+                    currentSticker.name = sticker["name"]
+                    currentSticker.price = float(int(sticker["scm"]["price"])/100)
+                    
+                    currentSkin.stickers.append(currentSticker)
+                
 
             skins.append(currentSkin)
 
     if(len(skins) > 0):
         print("Skins found preparing email")
         
-        subject = "Email Subject"
-        body = "This is the body of the text message"
+        subject = "★ Skin Searcher ★"
+        body = """\
+        <html>
+            <body>
+            </body>
+        </html>
+        """
         sender = emailSettings["sender"]
         recipients = emailSettings["recipients"]
         password = emailSettings["password"]
 
-        send_email(subject, body, sender, recipients, password)
+        sendEmail(subject, body, sender, recipients, password)
     else:
         print("No skins found")
 
-def send_email(subject, body, sender, recipients, password):
+def sendEmail(subject, body, sender, recipients, password):
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = sender
@@ -74,7 +92,7 @@ def send_email(subject, body, sender, recipients, password):
     except:
         print("Failed to send email")
         
-    smtp_server.quit()
+    smtp_server.quit()        
 
 
 if __name__ == "__main__":
