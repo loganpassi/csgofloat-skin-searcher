@@ -82,6 +82,8 @@ def main():
         else:
             print("No skins found")
         
+        print("Sleeping...")
+        
         #Sleep for 15 min (900 sec)
         time.sleep(900)
 
