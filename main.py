@@ -2,6 +2,7 @@ from requests.auth import HTTPBasicAuth
 from email.mime.text import MIMEText
 import requests
 import smtplib
+import json
 
 from models import SkinModel
 
@@ -9,18 +10,17 @@ import smtplib
 from email.mime.text import MIMEText
 
 def main():
-    subject = "Email Subject"
-    body = "This is the body of the text message"
-    sender = "sender@gmail.com"
-    recipients = ["recipient1@gmail.com", "recipient2@gmail.com"]
-    password = "password"
+    
+    jsonFile = open('./settings.json')
+    settings = json.load(jsonFile)
+    emailSettings = settings["emailSettings"]
+    searchSettings = settings["searchSettings"]
 
-    send_email(subject, body, sender, recipients, password)
-
-    url = 'https://csgofloat.com/api/v1/listings?limit=30&def_index=5030&paint_index=10018'
+    url = searchSettings["searchUrl"]
     headers = {'Accept': 'application/json'}
 
-    maxFloat = 0.20
+    maxFloat = searchSettings["maxFloat"]
+    minFloat = searchSettings["minFloat"]
 
     try:
         response = requests.get(url, headers=headers)
@@ -31,7 +31,7 @@ def main():
     skins = []
 
     for s in response.json():
-        if float(s["item"]["float_value"]) <= maxFloat:
+        if float(s["item"]["float_value"]) <= maxFloat and float(s["item"]["float_value"]) >= minFloat:
             currentSkin = SkinModel()
             currentSkin.id = s["id"]
             currentSkin.price = int(s["price"])
@@ -46,7 +46,18 @@ def main():
 
             skins.append(currentSkin)
 
-    print("end")
+    if(len(skins) > 0):
+        print("Skins found preparing email")
+        
+        subject = "Email Subject"
+        body = "This is the body of the text message"
+        sender = emailSettings["sender"]
+        recipients = emailSettings["recipients"]
+        password = emailSettings["password"]
+
+        send_email(subject, body, sender, recipients, password)
+    else:
+        print("No skins found")
 
 def send_email(subject, body, sender, recipients, password):
     msg = MIMEText(body)
@@ -56,8 +67,10 @@ def send_email(subject, body, sender, recipients, password):
     smtp_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
     
     try:
+        print("Attempting to send email")
         smtp_server.login(sender, password)
         smtp_server.sendmail(sender, recipients, msg.as_string())
+        print("Email sent")
     except:
         print("Failed to send email")
         
