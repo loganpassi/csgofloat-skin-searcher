@@ -1,3 +1,5 @@
+from typing import List
+
 class StickerModel:
     id: int
     slot: int
@@ -23,7 +25,7 @@ class SkinModel:
     inspect_link: str
     is_stattrak: bool
     is_souvenir: bool
-    stickers: list
+    stickers: List[StickerModel]
     
     def __init__(self):
         self.id = ""
