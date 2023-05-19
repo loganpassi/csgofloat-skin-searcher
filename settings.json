@@ -11,9 +11,10 @@
     "searchSettings": {
         "minFloat": 0.00,
         "maxFloat": 0.20,
-        "baseApiUrl": "https://csgofloat.com/api/v1/listings?limit=100",
+        "sortBy": "lowest_float",
+        "baseApiUrl": "https://csgofloat.com/api/v1/listings?limit=100&",
         "baseSearchUrl": "https://csgofloat.com/search?",
-        "queryParams": "&def_index=5030&paint_index=10018"
+        "skinParams": "&def_index=5030&paint_index=10018"
     }
 
 }
