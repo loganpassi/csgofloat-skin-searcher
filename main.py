@@ -5,13 +5,19 @@ import requests
 import smtplib
 import json
 import time
+import os
+import sys
 
 from models import SkinModel, StickerModel
 
 def main():
     
-    jsonFile = open('./settings.json')
+
+    script_path = os.path.abspath(__file__)
+    script_directory = os.path.dirname(script_path)
+    jsonFile = open(script_directory + './settings.json')
     settings = json.load(jsonFile)
+    authorizationSettings = settings["authorization"]
     emailSettings = settings["emailSettings"]
     searchSettings = settings["searchSettings"]
     
@@ -19,7 +25,10 @@ def main():
 
     apiUrl = searchSettings["baseApiUrl"] + queryParams
     searchUrl = searchSettings["baseSearchUrl"] + queryParams
-    headers = {'Accept': 'application/json'}
+    headers = {
+        'Accept': 'application/json',
+        'Authorization': authorizationSettings["apiKey"]
+    }
     
     savedSkins:List[SkinModel] = list()
     foundSkins:List[SkinModel] = list()
@@ -30,15 +39,17 @@ def main():
             response = requests.get(apiUrl, headers=headers)
         except:
             print("Get Request Failed")
+            sys.exit(1)
         
         if(response.status_code != 200):
             print("Get Request Failed: " + response.reason)
+            sys.exit(1)
 
         if(len(response.json()) > 0):
             
             foundSkins = list()
             
-            for obj in response.json():
+            for obj in response.json()["data"]:
                 skin = obj["item"]
                 currentSkin = SkinModel()
                 currentSkin.id = int(obj["id"])
@@ -122,8 +133,8 @@ def sendEmail(subject, body, sender, recipients, password) -> None:
         smtp_server.login(sender, password)
         smtp_server.sendmail(sender, recipients, msg.as_string())
         print("Email sent")
-    except:
-        print("Failed to send email")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
         
     smtp_server.quit()
 
