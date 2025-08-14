@@ -14,6 +14,15 @@ class StickerModel:
         self.name = ""
         self.price = 0.00
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "slot": self.slot,
+            "icon_url": self.icon_url,
+            "name": self.name,
+            "price": self.price
+        }
+
 class SkinModel:
     id: int
     price: float
@@ -25,6 +34,7 @@ class SkinModel:
     inspect_link: str
     is_stattrak: bool
     is_souvenir: bool
+    screenshot_id: int
     stickers: List[StickerModel]
     
     def __init__(self):
@@ -38,4 +48,21 @@ class SkinModel:
         self.inspect_link = ""
         self.is_stattrak = False
         self.is_souvenir = False
+        screenshot_id = 0
         self.stickers = list()
+
+    def to_dict(self): # Helper to convert object to dictionary for JSON serialization
+        return  {
+            "id": self.id,
+            "price": self.price,
+            "paint_seed": self.paint_seed,
+            "float_value": self.float_value,
+            "item_name": self.item_name,
+            "wear_name": self.wear_name,
+            "description": self.description,
+            "inspect_link": self.inspect_link,
+            "is_stattrak": self.is_stattrak,
+            "is_souvenir": self.is_souvenir,
+            "screeshot_id": self.screenshot_id,
+            "stickers": [obj.to_dict() for obj in self.stickers]
+        }

@@ -1,4 +1,8 @@
 {
+	"authorization": {
+		"apiKey": "apiKey"
+	},
+	
     "emailSettings": {
         "sender": "sender@gmail.com",
         "password": "password",
@@ -12,9 +16,12 @@
         "minFloat": 0.00,
         "maxFloat": 0.20,
         "sortBy": "lowest_float",
-        "baseApiUrl": "https://csgofloat.com/api/v1/listings?limit=100&",
-        "baseSearchUrl": "https://csgofloat.com/search?",
-        "skinParams": "&def_index=5030&paint_index=10018"
+        "baseApiUrl": "https://csfloat.com/api/v1/listings?limit=50&",
+		"baseItemLink": "https://csfloat.com/item/",
+        "baseSearchUrl": "https://csfloat.com/search?",
+		"playsideLink": "https://s.csfloat.com/m/$skinId/playside.png?v=3",
+		"backsideLink": "https://s.csfloat.com/m/$skinId/backside.png?v=3",
+        "skinParams": "&def_index=5030&paint_index=10037"
     }
 
 }
