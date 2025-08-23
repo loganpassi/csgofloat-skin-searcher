@@ -1,5 +1,7 @@
 from typing import List
+from dataclasses import dataclass
 
+@dataclass
 class StickerModel:
     id: int
     slot: int
@@ -22,7 +24,32 @@ class StickerModel:
             "name": self.name,
             "price": self.price
         }
+    
+@dataclass
+class SkinChanges:
+    added: bool
+    removed: bool
+    priceChanged: bool
+    oldPrice: float
+    newPrice: float
 
+    def __init__(self):
+        self.added = False
+        self.removed = False
+        self.priceChanged = False
+        self.oldPrice = 0.00
+        self.newPrice = 0.00
+
+    def to_dict(self):
+        return {
+            "added": self.added,
+            "removed": self.removed,
+            "priceChanged": self.priceChanged,
+            "oldPrice": self.oldPrice,
+            "newPrice": self.newPrice
+        }
+    
+@dataclass
 class SkinModel:
     id: int
     price: float
@@ -36,6 +63,7 @@ class SkinModel:
     is_souvenir: bool
     screenshot_id: int
     stickers: List[StickerModel]
+    skinChanges: SkinChanges
     
     def __init__(self):
         self.id = 0
@@ -50,6 +78,7 @@ class SkinModel:
         self.is_souvenir = False
         screenshot_id = 0
         self.stickers = list()
+        self.skinChanges = SkinChanges()
 
     def to_dict(self): # Helper to convert object to dictionary for JSON serialization
         return  {
@@ -63,6 +92,7 @@ class SkinModel:
             "inspect_link": self.inspect_link,
             "is_stattrak": self.is_stattrak,
             "is_souvenir": self.is_souvenir,
-            "screeshot_id": self.screenshot_id,
-            "stickers": [obj.to_dict() for obj in self.stickers]
+            "screenshot_id": self.screenshot_id,
+            "stickers": [obj.to_dict() for obj in self.stickers],
+            "skinChanges": self.skinChanges.to_dict()
         }
