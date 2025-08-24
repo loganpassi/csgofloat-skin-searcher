@@ -214,6 +214,8 @@ def prepareAndSendEmail(skinList: List[SkinModel], emailSettings, searchUrl, bas
                 fontColor = "green"
             elif(skin.skinChanges.removed):
                 fontColor = "red"
+            elif(skin.skinChanges.priceChanged):
+                fontColor = "purple"
             itemLink = baseItemLink + str(skin.id)
             playside = str(playsideLink).replace("$skinId", str(skin.screenshot_id))
             backside = str(backsideLink).replace("$skinId", str(skin.screenshot_id))
